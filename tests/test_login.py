@@ -16,25 +16,17 @@ class TestLogin:
         self.login_page.load()
         self.login_page.login("standard_user", "secret_sauce")
         assert self.products_page.get_page_title() == "Products"
-        time.sleep(10)
 
     @pytest.mark.tags("regression", "negative")
-    def test_invalid_password(self):
+    @pytest.mark.parametrize("username, password, expected_error", [
+        ("standard_user", "wrong_password", "Username and password do not match"),
+        ("locked_out_user", "secret_sauce", "Sorry, this user has been locked out"),
+        ("", "", "Username is required"),
+    ])
+    def test_invalid_login(self, username, password, expected_error):
         self.login_page.load()
-        self.login_page.login("standard_user", "wrong_password")
-        assert "Username and password do not match" in self.login_page.get_error_message()
-        time.sleep(10)
-
-    @pytest.mark.tags("regression", "negative")
-    def test_locked_out_user(self):
-        self.login_page.load()
-        self.login_page.login("locked_out_user", "secret_sauce")
-        assert "Sorry, this user has been locked out" in self.login_page.get_error_message()
-        time.sleep(10)
-
-    @pytest.mark.tags("regression", "negative")
-    def test_empty_credentials(self):
-        self.login_page.load()
-        self.login_page.click_login()
-        assert "Username is required" in self.login_page.get_error_message()
-        time.sleep(10)
+        if username or password:
+            self.login_page.login(username, password)
+        else:
+            self.login_page.click_login()
+        assert expected_error in self.login_page.get_error_message()

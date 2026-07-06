@@ -1,39 +1,27 @@
-# tests/test_products_sort.py
 import pytest
-from pages.login_page import LoginPage
-from pages.products_page import ProductsPage
+import pages
 
 
 class TestProductsSort:
 
     @pytest.fixture(autouse=True)
     def setup(self, driver):
-        self.login_page = LoginPage(driver)
-        self.products_page = ProductsPage(driver)
-
+        self.login_page = pages.LoginPage(driver)
+        self.products_page = pages.ProductsPage(driver)
         self.login_page.load()
         self.login_page.login("standard_user", "secret_sauce")
 
-    @pytest.mark.tags("smoke")
-    def test_sort_price_low_to_high(self):
-        self.products_page.sort_by("Price (low to high)")
-        prices = self.products_page.get_all_prices()
-        assert prices == sorted(prices)
-
-    @pytest.mark.tags("regression")
-    def test_sort_price_high_to_low(self):
-        self.products_page.sort_by("Price (high to low)")
-        prices = self.products_page.get_all_prices()
-        assert prices == sorted(prices, reverse=True)
-
-    @pytest.mark.tags("regression")
-    def test_sort_name_a_to_z(self):
-        self.products_page.sort_by("Name (A to Z)")
-        names = self.products_page.get_all_names()
-        assert names == sorted(names)
-
-    @pytest.mark.tags("regression")
-    def test_sort_name_z_to_a(self):
-        self.products_page.sort_by("Name (Z to A)")
-        names = self.products_page.get_all_names()
-        assert names == sorted(names, reverse=True)
+    @pytest.mark.tags("smoke", "regression")
+    @pytest.mark.parametrize("sort_option, key, reverse", [
+        ("Price (low to high)", "price", False),
+        ("Price (high to low)", "price", True),
+        ("Name (A to Z)", "name", False),
+        ("Name (Z to A)", "name", True),
+    ])
+    def test_sort(self, sort_option, key, reverse):
+        self.products_page.sort_by(sort_option)
+        if key == "price":
+            items = self.products_page.get_all_prices()
+        else:
+            items = self.products_page.get_all_names()
+        assert items == sorted(items, reverse=reverse)

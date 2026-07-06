@@ -2,6 +2,15 @@ name: Selenium Test Suite
 
 on:
   workflow_dispatch:
+    inputs:
+      test_path:
+        description: "Test path or file (e.g. tests/ or tests/test_login.py)"
+        required: false
+        default: "tests/"
+      tags:
+        description: "Tag to filter by (e.g. smoke, regression, TC001)"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -28,7 +37,12 @@ jobs:
         uses: browser-actions/setup-chrome@v1
 
       - name: Run tests
-        run: python -m pytest tests/ -v --alluredir=allure-results
+        run: |
+          if [ -n "${{ github.event.inputs.tags }}" ]; then
+            python -m pytest ${{ github.event.inputs.test_path }} --tags=${{ github.event.inputs.tags }} -v --alluredir=allure-results
+          else
+            python -m pytest ${{ github.event.inputs.test_path }} -v --alluredir=allure-results
+          fi
         continue-on-error: true
 
       - name: Install Allure CLI
